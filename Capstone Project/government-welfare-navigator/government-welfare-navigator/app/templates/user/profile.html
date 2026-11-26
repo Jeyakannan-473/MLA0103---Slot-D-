@@ -1,0 +1,27 @@
+{% extends 'base.html' %}{% block title %}My profile{% endblock %}
+{% block content %}
+{% set f = form if form else None %}
+{% macro val(f, name, current) %}{{ (f.get(name) if f else current) or '' }}{% endmacro %}
+{% macro tri(f, name, current) %}{% set v = (f.get(name) if f else ('yes' if current is true else 'no' if current is false else '')) %}
+<select class="form-select" name="{{ name }}"><option value="">Prefer not to answer / not sure</option><option value="yes" {{ 'selected' if v == 'yes' }}>Yes</option><option value="no" {{ 'selected' if v == 'no' }}>No</option></select>{% endmacro %}
+<div class="container section" style="max-width:860px">
+  <h1 class="h3">My profile</h1>
+  <p class="text-muted">Only details needed for scheme matching are collected. You can leave any field blank; schemes that need it will show “Needs More Information”. Profile {{ profile.completion() }}% complete.</p>
+  <form method="post" class="card p-4 needs-validation" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="row g-3">
+      <div class="col-md-4"><label class="form-label" for="dob">Date of birth</label><input class="form-control" type="date" id="dob" name="date_of_birth" value="{{ (f.get('date_of_birth') if f else (profile.date_of_birth.isoformat() if profile.date_of_birth else '')) }}"></div>
+      <div class="col-md-4"><label class="form-label" for="gender">Gender</label><select class="form-select" id="gender" name="gender"><option value="">Select</option>{% for k, l in genders %}<option value="{{ k }}" {{ 'selected' if (f.get('gender') if f else profile.gender) == k }}>{{ l }}</option>{% endfor %}</select></div>
+      <div class="col-md-4"><label class="form-label" for="residence_type">Residence</label><select class="form-select" id="residence_type" name="residence_type"><option value="">Select</option>{% for k, l in residence %}<option value="{{ k }}" {{ 'selected' if (f.get('residence_type') if f else profile.residence_type) == k }}>{{ l }}</option>{% endfor %}</select></div>
+      <div class="col-md-6"><label class="form-label" for="district">District (Tamil Nadu)</label><select class="form-select" id="district" name="district"><option value="">Select</option>{% for d in districts %}<option {{ 'selected' if (f.get('district') if f else profile.district) == d }}>{{ d }}</option>{% endfor %}</select></div>
+      <div class="col-md-6"><label class="form-label" for="annual_income">Annual family income (₹)</label><input class="form-control" type="number" min="0" max="100000000" step="1" id="annual_income" name="annual_income" value="{{ val(f, 'annual_income', profile.annual_income) }}"><div class="form-text">Total yearly income of all family members.</div></div>
+      <div class="col-md-6"><label class="form-label" for="education_level">Highest education completed</label><select class="form-select" id="education_level" name="education_level"><option value="">Select</option>{% for k, l in edu_levels %}<option value="{{ k }}" {{ 'selected' if (f.get('education_level') if f else profile.education_level) == k }}>{{ l }}</option>{% endfor %}</select></div>
+      <div class="col-md-6"><label class="form-label" for="occupation">Occupation</label><select class="form-select" id="occupation" name="occupation"><option value="">Select</option>{% for k, l in occupations %}<option value="{{ k }}" {{ 'selected' if (f.get('occupation') if f else profile.occupation) == k }}>{{ l }}</option>{% endfor %}</select></div>
+      <div class="col-md-6"><label class="form-label">Currently a student?</label>{{ tri(f, 'is_student', profile.is_student) }}</div>
+      <div class="col-md-6"><label class="form-label">Pursuing a regular (not distance/open) course?</label>{{ tri(f, 'pursuing_regular_course', profile.pursuing_regular_course) }}</div>
+      <div class="col-md-6"><label class="form-label">Studied Classes 6–12 in a government school?</label>{{ tri(f, 'studied_govt_school', profile.studied_govt_school) }}</div>
+      <div class="col-md-6"><label class="form-label">Person with disability?</label>{{ tri(f, 'has_disability', profile.has_disability) }}<div class="form-text">Optional. Used only for disability-related schemes.</div></div>
+    </div>
+    <div class="mt-4"><button class="btn btn-primary" type="submit" data-loading><span class="spinner-border spinner-border-sm spinner-inline" aria-hidden="true"></span> <span class="btn-label">Save profile</span></button></div>
+  </form>
+</div>{% endblock %}

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import scheme_status, result_badge, doc_badge %}
+{% block title %}{{ scheme.name }}{% endblock %}
+{% block content %}
+<div class="container section">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{{ url_for('main.schemes') }}">Schemes</a></li><li class="breadcrumb-item active">{{ scheme.name[:50] }}</li></ol></nav>
+  <div class="d-flex flex-wrap gap-2 mb-2">{{ scheme_status(scheme) }}{% if scheme.is_demo %}<span class="badge bg-light text-dark border">Demonstration data</span>{% endif %}{% if scheme.category %}<span class="badge tag">{{ scheme.category.name }}</span>{% endif %}{% for t in scheme.tags('beneficiary_type') %}<span class="badge tag">{{ t|label }}</span>{% endfor %}</div>
+  <h1 class="h3">{{ scheme.name }}</h1>
+  <p class="text-muted">{{ scheme.department }}</p>
+  {% if scheme.status != 'published' %}<div class="warn-box mb-3"><strong>Not yet verified.</strong> {% if scheme.status == 'needs_verification' %}The conditions below have not been confirmed against the official source in this system. Treat them as indicative and check the official links.{% else %}This scheme is not publicly listed ({{ scheme.status }}).{% endif %}</div>{% endif %}
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card mb-3"><div class="card-header">About this scheme</div><div class="card-body"><p>{{ scheme.description }}</p>
+        {% if scheme.benefits %}<h2 class="h6">Benefits</h2><p>{{ scheme.benefits }}</p>{% endif %}
+        {% if scheme.application_steps %}<h2 class="h6">How to apply</h2><p>{{ scheme.application_steps }}</p>{% endif %}
+        <dl class="row small mb-0">
+          {% if scheme.effective_from %}<dt class="col-sm-4">Effective from</dt><dd class="col-sm-8">{{ scheme.effective_from.strftime('%d %b %Y') }}</dd>{% endif %}
+          {% if scheme.valid_until %}<dt class="col-sm-4">Valid until / deadline</dt><dd class="col-sm-8">{{ scheme.valid_until.strftime('%d %b %Y') }}</dd>{% endif %}
+          <dt class="col-sm-4">Last verified</dt><dd class="col-sm-8">{{ scheme.last_verified.strftime('%d %b %Y') if scheme.last_verified else 'Not yet verified' }}</dd>
+          <dt class="col-sm-4">Districts</dt><dd class="col-sm-8">{{ scheme.districts.replace(',', ', ') if scheme.districts else 'All districts of Tamil Nadu (as recorded)' }}</dd>
+        </dl></div></div>
+      <div class="card mb-3"><div class="card-header">Eligibility conditions</div><div class="card-body">
+        {% if scheme.rule and scheme.rule.conditions %}<ul class="mb-2">{% for c in scheme.rule.conditions %}<li>{{ c.label + ': ' if c.label }}{{ describe_condition(c.to_dict()) }}</li>{% endfor %}</ul>
+        <p class="small text-muted mb-0">Rule version {{ scheme.rule.version }}. Conditions marked “not yet verified” are unknown and are never guessed.</p>
+        {% else %}<p class="text-muted mb-0">No conditions have been recorded yet.</p>{% endif %}</div></div>
+      <div class="card"><div class="card-header">Required documents</div>
+        {% if scheme.documents %}<ul class="list-group list-group-flush">{% for d in scheme.documents %}<li class="list-group-item"><div class="d-flex justify-content-between gap-2"><div><strong>{{ d.name }}</strong> {% if not d.required %}<span class="badge bg-light text-dark border">Optional</span>{% endif %}<div class="small text-muted">{{ d.description }}</div>{% if d.how_to_obtain %}<div class="small mt-1"><i data-lucide="info"></i> {{ d.how_to_obtain }}</div>{% endif %}</div>
+          {% if ready %}<div>{{ doc_badge(ready['items'][loop.index0].status) }}</div>{% endif %}</div></li>{% endfor %}</ul>
+        {% else %}<div class="card-body text-muted">No documents recorded yet.</div>{% endif %}</div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card mb-3"><div class="card-header">Your preliminary result</div><div class="card-body">
+        {% if outcome %}{{ result_badge(outcome.result) }}<p class="small mt-2">{{ outcome.summary }}</p>
+          <a class="btn btn-primary btn-sm" href="{{ url_for('user.assessment_detail', scheme_id=scheme.id) }}">See full explanation</a>
+          {% if ready and ready.percent is not none %}<hr><div class="small mb-1">Document readiness: <strong>{{ ready.percent }}%</strong></div><div class="progress"><div class="progress-bar" style="width:{{ ready.percent }}%"></div></div>{% endif %}
+        {% else %}<p class="small text-muted">Create a free account and complete your profile to see whether you may be eligible.</p><a class="btn btn-primary btn-sm" href="{{ url_for('auth.register') }}">Create account</a>{% endif %}</div></div>
+      <div class="card"><div class="card-header">Official links</div><div class="card-body small">
+        {% if scheme.application_url %}<a class="btn btn-outline-primary btn-sm mb-3" href="{{ scheme.application_url }}" target="_blank" rel="noopener noreferrer">Official application page <i data-lucide="external-link"></i></a>{% endif %}
+        {% for s in scheme.sources %}<div class="mb-2"><a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.title }}</a><div class="text-muted">{{ s.source_type|label }} source{% if s.accessed_on %} · checked {{ s.accessed_on.strftime('%d %b %Y') }}{% endif %}</div></div>
+        {% else %}<span class="text-muted">No sources recorded.</span>{% endfor %}</div></div>
+    </div>
+  </div>
+</div>{% endblock %}

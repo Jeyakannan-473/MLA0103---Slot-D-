@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container section"><div class="row g-4">
+  <div class="col-lg-3"><nav class="admin-side" aria-label="Admin navigation">
+    {% for ep, icon, label in [('admin.dashboard','layout-dashboard','Dashboard'),('admin.schemes','landmark','Schemes'),('admin.users','users','Users'),('admin.notifications','bell-ring','Notifications'),('admin.logs','scroll-text','Activity logs')] %}
+    <a href="{{ url_for(ep) }}" class="{{ 'active' if request.endpoint == ep }}"><i data-lucide="{{ icon }}"></i> {{ label }}</a>{% endfor %}</nav></div>
+  <div class="col-lg-9">{% block admin %}{% endblock %}</div>
+</div></div>
+{% endblock %}

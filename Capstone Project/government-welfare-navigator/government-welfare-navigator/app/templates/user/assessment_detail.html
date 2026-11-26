@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import result_badge, cond_badge, scheme_status %}
+{% block title %}Assessment: {{ scheme.name }}{% endblock %}
+{% block content %}
+<div class="container section">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{{ url_for('user.assessments') }}">Eligibility</a></li><li class="breadcrumb-item active">{{ scheme.name[:50] }}</li></ol></nav>
+  <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start mb-3">
+    <div><h1 class="h4 mb-1">{{ scheme.name }}</h1>{{ scheme_status(scheme) }}</div>
+    <div>{{ result_badge(outcome.result) }}</div></div>
+  {% if scheme.status != 'published' %}<div class="warn-box mb-3">The rules for this scheme are <strong>not yet verified</strong> in this system. This explanation is indicative only.</div>{% endif %}
+  <div class="card mb-3"><div class="card-body"><h2 class="h6">Final result</h2><p class="mb-1">{{ outcome.summary }}</p>
+    <div class="small text-muted">Rule version used: <strong>v{{ outcome.rule_version }}</strong> · Evaluated {{ record.created_at.strftime('%d %b %Y, %H:%M') }} UTC</div></div></div>
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="card mb-3"><div class="card-header">Rules evaluated</div><div class="card-body">
+        {% for c in outcome.conditions %}<div class="cond-row {{ c.status }}"><div class="d-flex justify-content-between gap-2 flex-wrap"><strong>{{ c.label }}</strong>{{ cond_badge(c.status) }}</div>
+          <div class="small text-muted mt-1">Requirement: {{ c.requirement }}</div><div class="small">Your value: {{ format_value(c.attribute, c.actual) }}</div><div class="small mt-1">{{ c.explanation }}</div></div>
+        {% else %}<p class="text-muted mb-0">No conditions recorded for this scheme.</p>{% endfor %}</div></div>
+      {% if outcome.missing %}<div class="card mb-3"><div class="card-header">Missing information</div><div class="card-body"><ul class="mb-2">{% for c in outcome.missing %}<li>{{ c.label }}{% if c.operator == 'unknown' %} <span class="text-muted">(official condition not verified yet)</span>{% endif %}</li>{% endfor %}</ul>
+        <a class="btn btn-sm btn-primary" href="{{ url_for('user.profile') }}">Update my profile</a></div></div>{% endif %}
+    </div>
+    <div class="col-lg-4">
+      <div class="card mb-3"><div class="card-header">Why this result</div><div class="card-body small">
+        <p><strong>Satisfied:</strong> {{ outcome.satisfied|length }}<br><strong>Not satisfied:</strong> {{ outcome.not_satisfied|length }}<br><strong>Missing / unknown:</strong> {{ outcome.missing|length }}</p>
+        <p class="mb-0 text-muted">Rule: any unmet condition → Not Eligible; otherwise any unknown → Needs More Information; otherwise Potentially Eligible.</p></div></div>
+      <div class="card mb-3"><div class="card-header">Your attributes considered</div><ul class="list-group list-group-flush small">
+        {% for c in outcome.attributes_considered %}<li class="list-group-item d-flex justify-content-between"><span>{{ attribute_label(c.attribute) }}</span><strong>{{ format_value(c.attribute, c.actual) }}</strong></li>{% else %}<li class="list-group-item text-muted">None</li>{% endfor %}</ul></div>
+      <div class="card mb-3"><div class="card-header">Official source</div><div class="card-body small">
+        {% for s in scheme.sources %}<div class="mb-1"><a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.title }}</a></div>{% else %}<span class="text-muted">No source recorded.</span>{% endfor %}
+        {% if scheme.application_url %}<a class="btn btn-sm btn-outline-primary mt-2" href="{{ scheme.application_url }}" target="_blank" rel="noopener noreferrer">Official application page</a>{% endif %}</div></div>
+      <div class="note-box">{{ engine.DISCLAIMER }}</div>
+    </div>
+  </div>
+</div>{% endblock %}

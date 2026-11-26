@@ -1,0 +1,11 @@
+{% extends 'admin/base.html' %}{% from '_macros.html' import scheme_status, empty %}{% block title %}Manage schemes{% endblock %}
+{% block admin %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3"><h1 class="h3 mb-0">Schemes</h1><a class="btn btn-primary" href="{{ url_for('admin.scheme_new') }}"><i data-lucide="plus"></i> New scheme</a></div>
+<ul class="nav nav-pills mb-3"><li class="nav-item"><a class="nav-link {{ 'active' if not status }}" href="{{ url_for('admin.schemes') }}">All</a></li>
+{% for k, l in C.SCHEME_STATUSES %}<li class="nav-item"><a class="nav-link {{ 'active' if status == k }}" href="{{ url_for('admin.schemes', status=k) }}">{{ l }}</a></li>{% endfor %}</ul>
+{% if schemes %}<div class="card"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Scheme</th><th>Status</th><th>Rule</th><th>Verified</th><th></th></tr></thead><tbody>
+{% for s in schemes %}<tr><td class="fw-semibold">{{ s.name[:70] }}{% if s.is_demo %} <span class="badge bg-light text-dark border">Demo</span>{% endif %}</td><td>{{ scheme_status(s) }}</td>
+<td class="small">v{{ s.rule.version if s.rule else '-' }} · {{ s.rule.conditions|length if s.rule else 0 }} cond.</td><td class="small">{{ s.last_verified.strftime('%d %b %Y') if s.last_verified else '—' }}</td>
+<td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.scheme_edit', scheme_id=s.id) }}">Manage</a></td></tr>{% endfor %}</tbody></table></div></div>
+{% else %}<div class="card">{{ empty('inbox','No schemes','Create a scheme or run the seed command.') }}</div>{% endif %}
+{% endblock %}

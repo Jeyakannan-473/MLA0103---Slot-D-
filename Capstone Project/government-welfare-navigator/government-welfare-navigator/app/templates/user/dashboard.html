@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import result_badge, empty %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="container section">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div><h1 class="h3 mb-0">Welcome, {{ current_user.full_name.split(' ')[0] }}</h1><div class="text-muted">Your preliminary scheme overview</div></div>
+    <div class="d-flex flex-wrap gap-2"><a class="btn btn-primary" href="{{ url_for('user.assessments') }}"><i data-lucide="clipboard-check"></i> Check eligibility</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('user.documents') }}"><i data-lucide="folder-check"></i> Documents</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('chat.assistant') }}"><i data-lucide="message-square-text"></i> Ask assistant</a></div>
+  </div>
+  {% if profile.completion() < 100 %}<div class="note-box mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2"><span><strong>Your profile is {{ profile.completion() }}% complete.</strong> Missing details can leave schemes at “Needs More Information”.</span><a class="btn btn-sm btn-primary" href="{{ url_for('user.profile') }}">Complete profile</a></div>{% endif %}
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3"><div class="card stat"><div class="lbl">Profile completion</div><div class="num">{{ profile.completion() }}%</div><div class="progress mt-2"><div class="progress-bar" style="width:{{ profile.completion() }}%"></div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card stat"><div class="lbl">Potentially eligible</div><div class="num text-success">{{ counts['Potentially Eligible'] }}</div><div class="lbl">of {{ total }} schemes</div></div></div>
+    <div class="col-6 col-lg-3"><div class="card stat"><div class="lbl">Need more information</div><div class="num" style="color:var(--warn)">{{ counts['Needs More Information'] }}</div></div></div>
+    <div class="col-6 col-lg-3"><div class="card stat"><div class="lbl">Avg. document readiness</div><div class="num">{{ (avg_readiness ~ '%') if avg_readiness is not none else '—' }}</div></div></div>
+  </div>
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="card mb-3"><div class="card-header">Recommended schemes</div>
+        {% if ranked %}<div class="list-group list-group-flush">{% for r in ranked %}
+          <div class="list-group-item"><div class="d-flex justify-content-between flex-wrap gap-2"><a class="fw-semibold text-decoration-none" href="{{ url_for('main.scheme_detail', slug=r.scheme.slug) }}">{{ r.scheme.name }}</a>{{ result_badge(r.outcome.result) }}</div>
+          <ul class="small text-muted mb-1 mt-1">{% for reason in r.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+          <div class="small">Relevance points: <strong>{{ r.points }}</strong> <span class="text-muted">(a relevance measure, not an eligibility chance)</span> · <a href="{{ url_for('user.assessment_detail', scheme_id=r.scheme.id) }}">Full explanation</a></div></div>{% endfor %}</div>
+        {% else %}{{ empty('sparkles', 'No recommendations yet', 'Complete your profile to see schemes that appear relevant to you.') }}{% endif %}</div>
+      <div class="row g-3">
+        <div class="col-md-6"><div class="card h-100"><div class="card-header">Eligibility overview</div><div class="card-body">{% if total %}<canvas id="resultChart" height="180" aria-label="Eligibility results chart" role="img"></canvas>{% else %}{{ empty('bar-chart-3','No data','Schemes will appear here.') }}{% endif %}</div></div></div>
+        <div class="col-md-6"><div class="card h-100"><div class="card-header">Document readiness by scheme</div><div class="card-body">{% if readiness_rows %}<canvas id="readyChart" height="180" aria-label="Document readiness chart" role="img"></canvas>{% else %}{{ empty('folder-open','No checklist yet','Readiness appears once schemes list required documents.') }}{% endif %}</div></div></div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card mb-3"><div class="card-header d-flex justify-content-between">Recent notifications <a class="small fw-normal" href="{{ url_for('user.notifications') }}">All</a></div>
+        {% if notes %}<ul class="list-group list-group-flush">{% for n in notes %}<li class="list-group-item {{ '' if n.is_read else 'fw-semibold' }}"><div class="small">{{ n.title }}</div><div class="small text-muted fw-normal">{{ n.created_at.strftime('%d %b %Y, %H:%M') }} UTC</div></li>{% endfor %}</ul>
+        {% else %}{{ empty('bell','No notifications','You will be alerted when relevant schemes change.') }}{% endif %}</div>
+      <div class="card"><div class="card-header">Recently viewed</div>
+        {% if recent %}<ul class="list-group list-group-flush">{% for s in recent %}<li class="list-group-item"><a href="{{ url_for('main.scheme_detail', slug=s.slug) }}">{{ s.name[:60] }}</a></li>{% endfor %}</ul>{% else %}{{ empty('history','Nothing yet','Schemes you open will be listed here.') }}{% endif %}</div>
+    </div>
+  </div>
+</div>{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function(){var d={{ chart|tojson }};
+var a=document.getElementById('resultChart');
+if(a){new Chart(a,{type:'doughnut',data:{labels:['Potentially eligible','Needs more information','Not eligible'],datasets:[{data:d.results,backgroundColor:['#2E9E68','#E0A020','#D0473A']}]},options:{plugins:{legend:{position:'bottom'}}}});}
+var b=document.getElementById('readyChart');
+if(b){new Chart(b,{type:'bar',data:{labels:d.readiness_labels,datasets:[{label:'Readiness %',data:d.readiness_values,backgroundColor:'#143A7B'}]},options:{indexAxis:'y',scales:{x:{min:0,max:100}},plugins:{legend:{display:false}}}});}})();
+</script>{% endblock %}

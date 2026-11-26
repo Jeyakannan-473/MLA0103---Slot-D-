@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import result_badge, doc_badge, empty %}
+{% block title %}Document readiness{% endblock %}
+{% block content %}
+<div class="container section">
+  <h1 class="h3">Document readiness</h1>
+  <p class="text-muted">Mark which documents you already have. Readiness = available required documents ÷ total required documents × 100. Statuses are self-confirmed and are <strong>not</strong> officially verified.</p>
+  {% if rows %}<div class="accordion" id="docs">{% for r in rows %}
+  <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button {{ '' if loop.first else 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#s{{ r.scheme.id }}">
+    <span class="me-3">{{ r.scheme.name }}</span><span class="badge {{ 'status-ok' if r.ready.percent == 100 else 'status-warn' }} me-2">{{ (r.ready.percent ~ '%') if r.ready.percent is not none else 'n/a' }}</span></button></h2>
+    <div id="s{{ r.scheme.id }}" class="accordion-collapse collapse {{ 'show' if loop.first }}" data-bs-parent="#docs"><div class="accordion-body">
+      <div class="d-flex justify-content-between align-items-center mb-2"><div>{{ result_badge(r.outcome.result) }}</div><div class="small text-muted">{{ r.ready.held_total }} of {{ r.ready.required_total }} required documents available</div></div>
+      {% if r.ready.percent is not none %}<div class="progress mb-3"><div class="progress-bar" style="width:{{ r.ready.percent }}%"></div></div>{% endif %}
+      <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Document</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+      {% for it in r.ready['items'] %}{% set d = it.doc %}<tr>
+        <td><strong>{{ d.name }}</strong> {% if not d.required %}<span class="badge bg-light text-dark border">Optional</span>{% endif %}<div class="small text-muted">{{ d.description }}</div>
+          {% if it.status == 'missing' and d.how_to_obtain %}<div class="small mt-1"><i data-lucide="lightbulb"></i> <strong>How to obtain:</strong> {{ d.how_to_obtain }}</div>{% endif %}
+          {% for u in uploads.get(d.doc_key, []) %}<div class="small mt-1"><i data-lucide="paperclip"></i> <a href="{{ url_for('user.document_file', doc_id=u.id) }}">{{ u.original_name }}</a> ({{ (u.size_bytes / 1024)|round(1) }} KB)
+            {% if u.ocr_suggestion %}<span class="text-muted">· {{ u.ocr_suggestion }}</span>{% endif %}
+            <form class="d-inline" method="post" action="{{ url_for('user.document_delete', doc_id=u.id) }}" data-confirm="Delete this uploaded file?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-link btn-sm p-0 text-danger">Delete</button></form></div>{% endfor %}</td>
+        <td>{{ doc_badge(it.status) }}</td>
+        <td><div class="d-flex flex-wrap gap-1">
+          <form method="post" action="{{ url_for('user.document_status', doc_key=d.doc_key) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="status" value="{{ 'missing' if it.status == 'available' else 'available' }}"><button class="btn btn-sm btn-outline-primary">{{ 'Mark missing' if it.status == 'available' else 'I have this' }}</button></form>
+          <form method="post" enctype="multipart/form-data" action="{{ url_for('user.document_upload', doc_key=d.doc_key) }}" class="d-flex gap-1"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input class="form-control form-control-sm" style="max-width:170px" type="file" name="file" accept=".pdf,.png,.jpg,.jpeg" required aria-label="Upload {{ d.name }}"><button class="btn btn-sm btn-outline-secondary">Upload</button></form></div></td></tr>{% endfor %}
+      </tbody></table></div>
+      <div class="small text-muted">Uploads are optional (PDF/PNG/JPG, max 5 MB) and are private to you.</div>
+    </div></div></div>{% endfor %}</div>
+  {% else %}<div class="card">{{ empty('folder-open','No document checklists','Schemes that list required documents will appear here.') }}</div>{% endif %}
+</div>{% endblock %}

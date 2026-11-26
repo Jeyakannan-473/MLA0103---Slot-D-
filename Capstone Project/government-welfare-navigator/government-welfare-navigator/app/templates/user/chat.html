@@ -1,0 +1,13 @@
+{% extends 'base.html' %}{% block title %}Welfare assistant{% endblock %}
+{% block content %}
+<div class="container section" style="max-width:860px">
+  <h1 class="h3">Welfare assistant</h1>
+  <p class="text-muted">Ask in English or தமிழ். Answers come only from the scheme database and your own eligibility results; I will say so when information is not available.</p>
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    {% for q in ['Which schemes may be suitable for me?','What documents are required for Pudhumai Penn?','Why am I not eligible for CMCHIS?','How do I apply for Tamil Pudhalvan?','What is the income requirement for CMCHIS?','எனக்கு எந்த திட்டங்கள் பொருத்தமானவை?'] %}
+    <button type="button" class="btn btn-sm btn-outline-primary" data-ask="{{ q }}">{{ q }}</button>{% endfor %}</div>
+  <div id="chat-box" class="chat-box mb-3" aria-live="polite"><div class="msg bot">Hello! Ask me about a scheme by name, required documents, eligibility reasons, how to apply, or how to obtain a certificate.</div></div>
+  <form id="chat-form" class="d-flex gap-2"><label class="visually-hidden" for="chat-input">Your question</label>
+    <input id="chat-input" class="form-control" maxlength="500" placeholder="Type your question…" autocomplete="off" required><button class="btn btn-primary" type="submit"><i data-lucide="send"></i> Send</button></form>
+  <div class="note-box mt-3">The assistant gives preliminary information only and never an official approval or legal decision.</div>
+</div>{% endblock %}

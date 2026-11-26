@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import result_badge, scheme_status, empty %}
+{% block title %}Eligibility assessment{% endblock %}
+{% block content %}
+<div class="container section">
+  <h1 class="h3">Eligibility assessment</h1>
+  <p class="text-muted">Each scheme’s rules are evaluated against your profile. These are preliminary results, not official decisions.</p>
+  {% if profile.completion() < 60 %}<div class="warn-box mb-3">Your profile is only {{ profile.completion() }}% complete, so several schemes may show “Needs More Information”. <a href="{{ url_for('user.profile') }}">Complete your profile</a>.</div>{% endif %}
+  {% if rows %}<div class="card"><div class="table-responsive"><table class="table align-middle mb-0">
+    <thead><tr><th>Scheme</th><th>Result</th><th>Conditions</th><th></th></tr></thead><tbody>
+    {% for s, o in rows %}<tr><td><div class="fw-semibold">{{ s.name }}</div><div class="small">{{ scheme_status(s) }}</div></td><td>{{ result_badge(o.result) }}</td>
+      <td class="small">{{ o.satisfied|length }} satisfied · {{ o.not_satisfied|length }} not satisfied · {{ o.missing|length }} unknown</td>
+      <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('user.assessment_detail', scheme_id=s.id) }}">View explanation</a></td></tr>{% endfor %}</tbody></table></div></div>
+  {% else %}<div class="card">{{ empty('inbox','No schemes available','Schemes will be listed here once added.') }}</div>{% endif %}
+</div>{% endblock %}

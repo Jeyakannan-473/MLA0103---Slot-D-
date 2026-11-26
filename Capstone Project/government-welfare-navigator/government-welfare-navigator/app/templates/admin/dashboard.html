@@ -1,0 +1,20 @@
+{% extends 'admin/base.html' %}{% block title %}Admin dashboard{% endblock %}
+{% block admin %}
+<h1 class="h3 mb-3">Administration</h1>
+<div class="row g-3 mb-3">
+  {% for k, l in [('users','Registered users'),('schemes','Total schemes'),('published','Published'),('needs_verification','Need verification'),('assessments','Assessments stored'),('notifications','Notifications created')] %}
+  <div class="col-6 col-md-4"><div class="card stat"><div class="lbl">{{ l }}</div><div class="num">{{ stats[k] }}</div></div></div>{% endfor %}
+</div>
+{% if stats.needs_verification %}<div class="warn-box mb-3">{{ stats.needs_verification }} scheme(s) need verification. Open each scheme, check the official source, then use “Verify and publish”. <a href="{{ url_for('admin.schemes', status='needs_verification') }}">Review now</a></div>{% endif %}
+<div class="row g-3 mb-3">
+  <div class="col-md-4"><div class="card h-100"><div class="card-header">Schemes by status</div><div class="card-body"><canvas id="c1" height="200"></canvas></div></div></div>
+  <div class="col-md-4"><div class="card h-100"><div class="card-header">Schemes by category</div><div class="card-body"><canvas id="c2" height="200"></canvas></div></div></div>
+  <div class="col-md-4"><div class="card h-100"><div class="card-header">Stored assessment results</div><div class="card-body">{% if chart.result_values %}<canvas id="c3" height="200"></canvas>{% else %}<p class="text-muted small mb-0">No assessments stored yet.</p>{% endif %}</div></div></div>
+</div>
+<div class="card"><div class="card-header">Recent activity</div><ul class="list-group list-group-flush small">
+  {% for l in logs %}<li class="list-group-item d-flex justify-content-between"><span>{{ l.action }} {% if l.detail %}· {{ l.detail[:70] }}{% endif %}</span><span class="text-muted">{{ l.created_at.strftime('%d %b %H:%M') }}</span></li>{% else %}<li class="list-group-item text-muted">No activity yet.</li>{% endfor %}</ul></div>
+{% endblock %}
+{% block scripts %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>(function(){var d={{ chart|tojson }};var pal=['#143A7B','#2E9E68','#E0A020','#D0473A','#6AA3E8','#7A869A'];
+function mk(id,type,labels,vals){var e=document.getElementById(id);if(!e||!vals.length)return;new Chart(e,{type:type,data:{labels:labels,datasets:[{data:vals,backgroundColor:pal}]},options:{plugins:{legend:{position:'bottom',display:type!=='bar'}},scales:type==='bar'?{y:{beginAtZero:true,ticks:{precision:0}}}:{}}});}
+mk('c1','doughnut',d.status_labels,d.status_values);mk('c2','bar',d.cat_labels,d.cat_values);mk('c3','doughnut',d.result_labels,d.result_values);})();</script>{% endblock %}

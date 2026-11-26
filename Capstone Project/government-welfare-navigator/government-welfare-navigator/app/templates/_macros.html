@@ -1,0 +1,33 @@
+{% macro result_badge(r) -%}
+  {% if r == 'Potentially Eligible' %}<span class="badge status-ok"><i data-lucide="check-circle-2"></i> Potentially Eligible</span>
+  {% elif r == 'Not Eligible' %}<span class="badge status-bad"><i data-lucide="x-circle"></i> Not Eligible</span>
+  {% else %}<span class="badge status-warn"><i data-lucide="help-circle"></i> Needs More Information</span>{% endif %}
+{%- endmacro %}
+{% macro cond_badge(s) -%}
+  {% if s == 'satisfied' %}<span class="badge status-ok">Satisfied</span>
+  {% elif s == 'not_satisfied' %}<span class="badge status-bad">Not satisfied</span>
+  {% else %}<span class="badge status-warn">More information required</span>{% endif %}
+{%- endmacro %}
+{% macro doc_badge(s) -%}
+  {% if s == 'available' %}<span class="badge status-ok">Available (self-confirmed)</span>
+  {% elif s == 'pending_verification' %}<span class="badge status-warn">Pending verification</span>
+  {% else %}<span class="badge status-bad">Missing</span>{% endif %}
+{%- endmacro %}
+{% macro scheme_status(s) -%}
+  {% if s.status == 'published' %}<span class="badge status-ok">Verified {{ s.last_verified.strftime('%d %b %Y') if s.last_verified else '' }}</span>
+  {% elif s.status == 'needs_verification' %}<span class="badge status-warn">Awaiting verification</span>
+  {% elif s.status == 'draft' %}<span class="badge bg-secondary">Draft</span>
+  {% else %}<span class="badge bg-dark">Archived</span>{% endif %}
+{%- endmacro %}
+{% macro empty(icon, title, text) -%}
+  <div class="empty"><i data-lucide="{{ icon }}"></i><h6 class="mt-2">{{ title }}</h6><p class="mb-0">{{ text }}</p></div>
+{%- endmacro %}
+{% macro pager(pagination, endpoint) -%}
+  {% if pagination.pages > 1 %}
+  <nav aria-label="Pagination"><ul class="pagination justify-content-center mt-3">
+    {% for p in range(1, pagination.pages + 1) %}
+    <li class="page-item {{ 'active' if p == pagination.page }}"><a class="page-link" href="{{ url_for(endpoint, page=p, **kwargs) }}">{{ p }}</a></li>
+    {% endfor %}
+  </ul></nav>
+  {% endif %}
+{%- endmacro %}

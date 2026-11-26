@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import scheme_status %}
+{% block title %}Find government benefits{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="container"><div class="row align-items-center g-4">
+    <div class="col-lg-7">
+      <h1>Find the Government Benefits You May Be Eligible For.</h1>
+      <p class="lead mt-3">Discover welfare schemes, understand eligibility, prepare your documents and stay informed through one intelligent platform.</p>
+      <div class="d-flex flex-wrap gap-2 mt-4">
+        <a class="btn btn-primary btn-lg" href="{{ url_for('main.schemes') }}"><i data-lucide="compass"></i> Explore Schemes</a>
+        <a class="btn btn-outline-primary btn-lg" href="{{ url_for('user.assessments') if current_user.is_authenticated else url_for('auth.register') }}"><i data-lucide="clipboard-check"></i> Check My Eligibility</a>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <form class="card search-card" method="get" action="{{ url_for('main.schemes') }}" role="search">
+        <label for="q" class="form-label">Search welfare schemes</label>
+        <div class="input-group mb-2"><span class="input-group-text bg-white"><i data-lucide="search"></i></span>
+          <input id="q" name="q" class="form-control" placeholder="e.g. scholarship, health insurance" maxlength="100"></div>
+        <select name="category" class="form-select mb-3" aria-label="Category">
+          <option value="">All categories</option>{% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select>
+        <button class="btn btn-primary" type="submit">Search schemes</button>
+      </form>
+    </div>
+  </div></div>
+</section>
+
+<section class="section"><div class="container">
+  <h2 class="h4 mb-4">How it works</h2>
+  <div class="row g-3">
+    {% for n, t, d in [(1,'Create your profile','Share only the details needed for scheme matching: age, income, education, district and similar.'),(2,'Check eligibility','A rule-based expert system evaluates every condition and shows which are met, unmet or unknown.'),(3,'Prepare documents','See exactly which documents each scheme needs, what is missing and how to obtain it.'),(4,'Stay informed','Get in-app (and optional email) alerts when relevant schemes are added or updated.')] %}
+    <div class="col-md-6 col-lg-3"><div class="card h-100 p-3"><span class="step-no mb-2">{{ n }}</span><h3 class="h6">{{ t }}</h3><p class="text-muted mb-0">{{ d }}</p></div></div>
+    {% endfor %}
+  </div>
+</div></section>
+
+<section class="section section-white"><div class="container">
+  <h2 class="h4 mb-4">What the platform does</h2>
+  <div class="row g-4">
+    <div class="col-md-4"><span class="feature-icon mb-3"><i data-lucide="scale"></i></span><h3 class="h6">Explainable eligibility</h3><p class="text-muted">Every result lists the conditions checked, the values used and the reason, along with the rule version and official source.</p></div>
+    <div class="col-md-4"><span class="feature-icon mb-3"><i data-lucide="folder-check"></i></span><h3 class="h6">Document readiness</h3><p class="text-muted">A scheme-wise checklist with a readiness percentage, optional private uploads and guidance for missing documents.</p></div>
+    <div class="col-md-4"><span class="feature-icon mb-3"><i data-lucide="message-square-text"></i></span><h3 class="h6">Assistant in English &amp; Tamil</h3><p class="text-muted">Answers come from the scheme database only, with source links. It says so when information is not available.</p></div>
+  </div>
+</div></section>
+
+<section class="section"><div class="container">
+  <div class="d-flex justify-content-between align-items-end mb-3"><h2 class="h4 mb-0">Featured schemes</h2><a href="{{ url_for('main.schemes') }}">View all</a></div>
+  {% if featured %}
+  <div class="row g-3">{% for s in featured %}
+    <div class="col-md-6 col-lg-3"><div class="card scheme-card"><div class="card-body">
+      <div class="mb-2">{{ scheme_status(s) }}{% if s.is_demo %} <span class="badge bg-light text-dark border">Demonstration data</span>{% endif %}</div>
+      <h3 class="h6">{{ s.name }}</h3><p class="text-muted small flex-grow-1">{{ s.description[:110] }}{% if s.description|length > 110 %}…{% endif %}</p>
+      <a href="{{ url_for('main.scheme_detail', slug=s.slug) }}" class="btn btn-sm btn-outline-primary align-self-start">View details</a></div></div></div>
+  {% endfor %}</div>
+  {% else %}<div class="card"><div class="empty"><i data-lucide="inbox"></i><h6 class="mt-2">No schemes yet</h6><p class="mb-0">Run <code>flask --app run.py seed</code> to load the demonstration records.</p></div></div>{% endif %}
+</div></section>
+
+<section class="section section-white"><div class="container">
+  <h2 class="h4 mb-4">Why use it</h2>
+  <div class="row g-3">
+    {% for t, d in [('One place to search','Browse schemes by category, beneficiary type, district and education level.'),('Transparent decisions','No random scores. Each outcome is traceable to rules an administrator can review and update.'),('Privacy by design','Only the information needed for matching is collected; uploads are visible only to you.'),('Honest about uncertainty','Unverified rules are labelled, and unknown conditions are never guessed.')] %}
+    <div class="col-md-6"><div class="d-flex gap-3"><i data-lucide="check-circle-2" class="text-success mt-1"></i><div><strong>{{ t }}</strong><div class="text-muted">{{ d }}</div></div></div></div>
+    {% endfor %}
+  </div>
+</div></section>
+
+<section class="section"><div class="container" style="max-width:820px">
+  <h2 class="h4 mb-3">Frequently asked questions</h2>
+  <div class="accordion" id="faq">
+    {% for q, a in [('Does a "Potentially Eligible" result mean I will receive the benefit?','No. It is a preliminary check against the rules recorded here. Only the concerned department decides eligibility.'),('Which information do I need to enter?','Date of birth, gender, district, residence type, family income, education, occupation and a few yes/no questions. Nothing else is required.'),('Why does a scheme show "Awaiting verification"?','Administrators must confirm the rules against official sources before a scheme is shown as current. Until then it is clearly labelled.'),('Are my uploaded documents shared?','No. Uploads are optional, stored privately and available only to you and authorised administrators. They are never verified by this system.'),('Can I use the assistant in Tamil?','Yes. Ask in Tamil or English; it answers from the scheme database and gives official links where available.')] %}
+    <div class="accordion-item"><h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f{{ loop.index }}">{{ q }}</button></h3>
+      <div id="f{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#faq"><div class="accordion-body">{{ a }}</div></div></div>
+    {% endfor %}
+  </div>
+</div></section>
+{% endblock %}

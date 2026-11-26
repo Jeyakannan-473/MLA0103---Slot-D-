@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import empty %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<div class="container section"><div class="row g-4">
+  <div class="col-lg-8">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3"><h1 class="h3 mb-0">Notifications</h1>
+      <form method="post" action="{{ url_for('user.notifications_read_all') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-primary">Mark all as read</button></form></div>
+    <ul class="nav nav-pills mb-3">{% for k, l in [('inbox','Inbox'),('unread','Unread'),('archived','Archived')] %}<li class="nav-item"><a class="nav-link {{ 'active' if view == k }}" href="{{ url_for('user.notifications', view=k) }}">{{ l }}</a></li>{% endfor %}</ul>
+    {% for n in pagination.items %}<div class="card notif {{ 'read' if n.is_read else 'unread' }} mb-2"><div class="card-body py-3">
+      <div class="d-flex justify-content-between gap-2 flex-wrap"><div><span class="badge tag">{{ C.NOTIFICATION_TYPES.get(n.ntype, n.ntype) }}</span> <strong class="ms-1">{{ n.title }}</strong></div><span class="small text-muted">{{ n.created_at.strftime('%d %b %Y, %H:%M') }} UTC</span></div>
+      <p class="small mb-2 mt-1">{{ n.message }}</p>
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        {% if n.scheme and n.scheme.status in ('published','needs_verification') %}<a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.scheme_detail', slug=n.scheme.slug) }}">View scheme</a>{% endif %}
+        {% if not n.is_read %}<form method="post" action="{{ url_for('user.notification_action', note_id=n.id, action='read') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-link">Mark as read</button></form>{% endif %}
+        {% if n.is_archived %}<form method="post" action="{{ url_for('user.notification_action', note_id=n.id, action='restore') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-link">Restore</button></form>
+        {% else %}<form method="post" action="{{ url_for('user.notification_action', note_id=n.id, action='archive') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-link">Archive</button></form>{% endif %}
+        <form method="post" action="{{ url_for('user.notification_action', note_id=n.id, action='delete') }}" data-confirm="Delete this notification?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-link text-danger">Delete</button></form>
+        {% if n.email_status == 'accepted_by_smtp_server' %}<span class="small text-muted">Email handed to mail server (delivery not confirmed)</span>{% elif n.email_status == 'failed' %}<span class="small text-danger">Email could not be sent</span>{% endif %}
+      </div></div></div>
+    {% else %}<div class="card">{{ empty('bell-off','Nothing here','New scheme alerts and reminders will appear in this list.') }}</div>{% endfor %}
+    {% if pagination.pages > 1 %}<nav class="mt-3"><ul class="pagination">{% for p in range(1, pagination.pages + 1) %}<li class="page-item {{ 'active' if p == pagination.page }}"><a class="page-link" href="{{ url_for('user.notifications', view=view, page=p) }}">{{ p }}</a></li>{% endfor %}</ul></nav>{% endif %}
+  </div>
+  <div class="col-lg-4"><div class="card"><div class="card-header">Notification preferences</div><div class="card-body">
+    <form method="post" action="{{ url_for('user.notification_preferences') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% for f, l in [('in_app_enabled','In-app notifications'),('email_enabled','Email notifications (I consent to receive emails)'),('notify_new_scheme','New schemes that match my profile'),('notify_scheme_update','Updates to schemes'),('notify_document_reminder','Missing document reminders'),('notify_deadline_reminder','Deadline reminders')] %}
+      <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" role="switch" id="{{ f }}" name="{{ f }}" {{ 'checked' if prefs[f] }}><label class="form-check-label" for="{{ f }}">{{ l }}</label></div>{% endfor %}
+      <button class="btn btn-primary btn-sm mt-2">Save preferences</button></form>
+    <p class="small text-muted mt-3 mb-0">Email is sent only if you opt in and the server has SMTP configured.</p></div></div></div>
+</div></div>{% endblock %}
